@@ -17,7 +17,20 @@ python3 -m http.server 8931
 # open http://localhost:8931/
 ```
 
-Any static host works: Vercel (`vercel --prod`), Netlify drag-and-drop, Cloudflare Pages, GitHub Pages (`/`), or `npx serve .`.
+## Docker
+
+```bash
+docker compose up --build -d   # -> http://localhost:8080
+PORT=3000 docker compose up --build -d
+docker compose down
+```
+
+Single-stage `nginx:alpine` image (~15 MB). `nginx.conf` serves `index.html` with `Cache-Control: no-cache` and long-caches `css/js` + gzip. Health check at `/health`.
+
+```bash
+docker build -t job-tracker .
+docker run -p 8080:80 job-tracker
+```
 
 ## What this is
 
@@ -32,9 +45,12 @@ Any static host works: Vercel (`vercel --prod`), Netlify drag-and-drop, Cloudfla
 ## Files
 
 ```
-index.html  ~16 KB — structure, dialogs (add/edit, import, delete), tab system
-styles.css  ~33 KB — desk/notebook theme, responsive, day/night, print, reduced-motion
-app.js      ~70 KB — logic, ~1,200 lines, 'use strict', no dependencies
+index.html          ~16 KB — structure, dialogs (add/edit, import, delete), tab system
+styles.css          ~33 KB — desk/notebook theme, responsive, day/night, print, reduced-motion
+app.js              ~70 KB — logic, ~1,200 lines, 'use strict', no dependencies
+Dockerfile                 — nginx:alpine static server
+nginx.conf                 — cache + gzip + SPA fallback + /health
+docker-compose.yml         — ports ${PORT:-8080}:80
 ```
 
 External requests at runtime: Google Fonts (`Caveat`, `Patrick Hand`) only. Everything else is local. Fonts can be self-hosted by vendoring `styles.css`'s `@import` if offline is required.
@@ -59,6 +75,17 @@ External requests at runtime: Google Fonts (`Caveat`, `Patrick Hand`) only. Ever
 
 ## Deploy
 
-**Vercel:** set *Framework preset* to Other, *Output directory* to `.` (or leave default for a single `index.html`). No build command.
+**Cloudflare Pages (recommended):**
 
-**Netlify / GitHub Pages / Cloudflare Pages:** publish the repo root; no build step.
+```bash
+# via Wrangler
+npx wrangler pages deploy . --project-name=job-tracker
+# or: connect the GitHub repo at dash.cloudflare.com → Pages → Create → Connect to Git
+# Build settings: Framework preset = None, Build command = (empty), Output directory = /
+```
+
+No build step — the repo root is the output. All four tabs are hash-routed, so no redirect rules needed. The `Dockerfile` is ignored by Pages (only used for self-hosting).
+
+**Vercel:** Framework preset = Other, Output directory = `.`, Build command = (empty).
+
+**Netlify / GitHub Pages:** publish the repo root; no build step.
