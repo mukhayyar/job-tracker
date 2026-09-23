@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catatan Lamaran Kerja — Job Application Tracker</title>
-  <meta name="description" content="Tracker lamaran kerja lokal-first: catat status, follow-up, checklist persiapan, dan analytics funnel lamaranmu. Data tersimpan di browser, bisa export/import JSON & CSV.">
+  <title id="doc-title">Catatan Lamaran Kerja — Job Application Tracker</title>
+  <meta id="meta-description" name="description" content="Tracker lamaran kerja lokal-first: catat status, follow-up, checklist persiapan, dan analytics funnel lamaranmu. Data tersimpan di browser, bisa export/import JSON &amp; CSV.">
   <meta name="theme-color" content="#d4c9a8">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4DD;</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,7 @@
 </head>
 <body>
 
-<div class="loading" id="loading">membuka buku catatan...</div>
+<div class="loading" id="loading" data-i18n="loading_text">membuka buku catatan...</div>
 
 <!-- Pencil cursor -->
 <div class="pencil-cursor" id="pencil-cursor" aria-hidden="true">
@@ -27,38 +27,39 @@
   </svg>
 </div>
 
-<button class="theme-toggle" id="theme-toggle" type="button" title="Ganti mode siang/malam" aria-label="Ganti mode siang atau malam">🌙</button>
-<div class="back-top" id="back-top" role="button" tabindex="0" aria-label="Kembali ke atas">&#8593;</div>
+<button class="lang-toggle" id="lang-toggle" type="button" data-i18n-title="lang_toggle_label" data-i18n-aria="lang_toggle_label" title="Ganti bahasa ke Inggris" aria-label="Ganti bahasa ke Inggris">EN</button>
+<button class="theme-toggle" id="theme-toggle" type="button" data-i18n-title="theme_toggle_label" data-i18n-aria="theme_toggle_label" title="Ganti mode siang/malam" aria-label="Ganti mode siang atau malam">🌙</button>
+<div class="back-top" id="back-top" role="button" tabindex="0" data-i18n-aria="back_top_aria" aria-label="Kembali ke atas">&#8593;</div>
 
 <div class="desk" id="desk">
 
   <!-- LEFT POST-ITS: live context -->
   <div class="postit-column left" id="postits-left">
-    <button class="postit postit-yellow" id="postit-streak" style="transform:rotate(-2deg)" type="button" title="Lihat lamaran terbaru">
-      <div class="pt">🔥 Ritme Melamar</div>
-      <div class="pb" id="postit-streak-body">Belum ada data. Mulai catat lamaran pertamamu!</div>
+    <button class="postit postit-yellow" id="postit-streak" style="transform:rotate(-2deg)" type="button" data-i18n-title="postit_streak_title_attr" title="Lihat lamaran terbaru">
+      <div class="pt" data-i18n="postit_streak_title">🔥 Ritme Melamar</div>
+      <div class="pb" id="postit-streak-body" data-i18n="streak_idle_empty">Belum ada data. Mulai catat lamaran pertamamu!</div>
     </button>
     <button class="postit postit-pink" id="postit-followup" style="transform:rotate(1.5deg)" type="button" hidden>
-      <div class="pt">⏰ Perlu Follow-up</div>
+      <div class="pt" data-i18n="postit_followup_title">⏰ Perlu Follow-up</div>
       <div class="pb" id="postit-followup-body"></div>
     </button>
     <button class="postit postit-green" id="postit-interview" style="transform:rotate(-1deg)" type="button" hidden>
-      <div class="pt">🎤 Interview Aktif</div>
+      <div class="pt" data-i18n="postit_interview_title">🎤 Interview Aktif</div>
       <div class="pb" id="postit-interview-body"></div>
     </button>
     <button class="postit postit-cta postit postit-orange" id="postit-add" style="transform:rotate(2deg)" type="button">
-      <div class="pt">✏️ Tambah Lamaran</div>
-      <div class="pb">Catat lamaran baru dalam 30 detik</div>
+      <div class="pt" data-i18n="postit_add_title">✏️ Tambah Lamaran</div>
+      <div class="pb" data-i18n="postit_add_body">Catat lamaran baru dalam 30 detik</div>
     </button>
   </div>
 
   <!-- NOTEBOOK -->
   <div class="notebook-wrapper">
-    <div class="page-tabs" role="tablist" aria-label="Halaman buku catatan">
-      <div class="page-tab active" data-page="tracker" role="tab" tabindex="0" aria-selected="true">📋 Tracker</div>
-      <div class="page-tab" data-page="checklist" role="tab" tabindex="0" aria-selected="false">✅ Checklist</div>
-      <div class="page-tab" data-page="analytics" role="tab" tabindex="0" aria-selected="false">📈 Analytics</div>
-      <div class="page-tab" data-page="tips" role="tab" tabindex="0" aria-selected="false">💡 Tips &amp; Tricks</div>
+    <div class="page-tabs" role="tablist" data-i18n-aria="page_tabs_aria" aria-label="Halaman buku catatan">
+      <div class="page-tab active" data-page="tracker" role="tab" tabindex="0" aria-selected="true" data-i18n="tab_tracker">📋 Tracker</div>
+      <div class="page-tab" data-page="checklist" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_checklist">✅ Checklist</div>
+      <div class="page-tab" data-page="analytics" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_analytics">📈 Analytics</div>
+      <div class="page-tab" data-page="tips" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_tips">💡 Tips &amp; Tricks</div>
     </div>
 
     <div class="notebook">
@@ -67,18 +68,18 @@
       <div class="page active" id="page-tracker" role="tabpanel">
         <div class="page-head">
           <div>
-            <h1>Catatan Lamaran Kerja</h1>
-            <p class="subtitle">Buku catatanku untuk berburu kerja — semua data tersimpan lokal di browser, tidak dikirim ke mana-mana.</p>
+            <h1 data-i18n="tracker_h1">Catatan Lamaran Kerja</h1>
+            <p class="subtitle" data-i18n="tracker_subtitle">Buku catatanku untuk berburu kerja — semua data tersimpan lokal di browser, tidak dikirim ke mana-mana.</p>
           </div>
-          <button class="btn btn-primary" id="btn-add-top" type="button">✏️ Tambah Lamaran</button>
+          <button class="btn btn-primary" id="btn-add-top" type="button" data-i18n="btn_add_top">✏️ Tambah Lamaran</button>
         </div>
 
         <div class="stats-strip" id="stats-strip"></div>
 
         <div class="followup-banner" id="followup-banner" hidden>
-          <span class="stamp">FOLLOW UP!</span>
+          <span class="stamp" data-i18n="followup_banner_stamp">FOLLOW UP!</span>
           <span id="followup-banner-text"></span>
-          <button class="btn btn-small" id="btn-filter-followup" type="button">Tampilkan</button>
+          <button class="btn btn-small" id="btn-filter-followup" type="button" data-i18n="btn_show">Tampilkan</button>
         </div>
 
         <div id="active-filters" aria-live="polite"></div>
@@ -86,13 +87,13 @@
         <div class="toolbar">
           <div class="toolbar-row">
             <div class="field" style="margin:0">
-              <label for="filter-keyword">🔍 Cari</label>
-              <input type="search" id="filter-keyword" placeholder="perusahaan, posisi, lokasi, catatan..." autocomplete="off">
+              <label for="filter-keyword" data-i18n="filter_keyword_label">🔍 Cari</label>
+              <input type="search" id="filter-keyword" data-i18n-ph="filter_keyword_placeholder" placeholder="perusahaan, posisi, lokasi, catatan..." autocomplete="off">
             </div>
             <div class="field" style="margin:0">
-              <label for="filter-status">📊 Status</label>
+              <label for="filter-status" data-i18n="filter_status_label">📊 Status</label>
               <select id="filter-status">
-                <option value="">Semua Status</option>
+                <option value="" data-i18n="filter_status_all">Semua Status</option>
                 <option value="wishlist">Wishlist</option>
                 <option value="applied">Applied</option>
                 <option value="interview">Interview</option>
@@ -101,50 +102,50 @@
               </select>
             </div>
             <div class="field" style="margin:0">
-              <label for="filter-platform">🌐 Platform</label>
+              <label for="filter-platform" data-i18n="filter_platform_label">🌐 Platform</label>
               <select id="filter-platform">
-                <option value="">Semua Platform</option>
+                <option value="" data-i18n="filter_platform_all">Semua Platform</option>
               </select>
             </div>
             <div class="field" style="margin:0">
-              <label for="sort-by">↕️ Urutkan</label>
+              <label for="sort-by" data-i18n="sort_label">↕️ Urutkan</label>
               <select id="sort-by">
-                <option value="date-desc">Terbaru melamar</option>
-                <option value="date-asc">Terlama melamar</option>
-                <option value="updated-desc">Terbaru diubah</option>
-                <option value="company-asc">Perusahaan A→Z</option>
-                <option value="status">Status (funnel)</option>
+                <option value="date-desc" data-i18n="sort_date_desc">Terbaru melamar</option>
+                <option value="date-asc" data-i18n="sort_date_asc">Terlama melamar</option>
+                <option value="updated-desc" data-i18n="sort_updated_desc">Terbaru diubah</option>
+                <option value="company-asc" data-i18n="sort_company_asc">Perusahaan A→Z</option>
+                <option value="status" data-i18n="sort_status">Status (funnel)</option>
               </select>
             </div>
           </div>
           <details>
-            <summary>Filter lanjutan &amp; rentang tanggal</summary>
+            <summary data-i18n="adv_filter_summary">Filter lanjutan &amp; rentang tanggal</summary>
             <div class="adv-row">
               <div class="field" style="margin:0">
-                <label for="filter-date-from">📅 Dari tanggal</label>
+                <label for="filter-date-from" data-i18n="filter_date_from_label">📅 Dari tanggal</label>
                 <input type="date" id="filter-date-from">
               </div>
               <div class="field" style="margin:0">
-                <label for="filter-date-to">📅 Sampai tanggal</label>
+                <label for="filter-date-to" data-i18n="filter_date_to_label">📅 Sampai tanggal</label>
                 <input type="date" id="filter-date-to">
               </div>
-              <button class="btn btn-small" id="btn-reset-filters" type="button">↺ Reset semua filter</button>
+              <button class="btn btn-small" id="btn-reset-filters" type="button" data-i18n="btn_reset_filters">↺ Reset semua filter</button>
             </div>
           </details>
         </div>
 
         <div class="results-bar">
-          <span>Menampilkan <strong id="showing-count">0</strong> dari <strong id="total-count">0</strong> lamaran</span>
+          <span id="results-summary"></span>
           <span class="controls">
-            <label for="per-page" style="display:inline;margin:0">Tampilkan:</label>
+            <label for="per-page" style="display:inline;margin:0" data-i18n="per_page_label">Tampilkan:</label>
             <select id="per-page">
               <option value="10" selected>10</option>
               <option value="25">25</option>
               <option value="50">50</option>
-              <option value="all">Semua</option>
+              <option value="all" data-i18n="per_page_all">Semua</option>
             </select>
-            <button class="btn btn-small" id="btn-export-csv" type="button">📊 Export CSV</button>
-            <button class="btn btn-small" id="btn-print" type="button">🖨️ Print</button>
+            <button class="btn btn-small" id="btn-export-csv" type="button" data-i18n="btn_export_csv">📊 Export CSV</button>
+            <button class="btn btn-small" id="btn-print" type="button" data-i18n="btn_print">🖨️ Print</button>
           </span>
         </div>
 
@@ -152,42 +153,42 @@
         <div id="pagination-container"></div>
 
         <div class="backup-row">
-          <span class="backup-title">💾 Backup &amp; Restore</span>
-          <button class="btn btn-small" id="btn-export-json" type="button">📥 Export JSON</button>
-          <button class="btn btn-small" id="btn-import" type="button">📤 Import JSON</button>
+          <span class="backup-title" data-i18n="backup_title">💾 Backup &amp; Restore</span>
+          <button class="btn btn-small" id="btn-export-json" type="button" data-i18n="btn_export_json">📥 Export JSON</button>
+          <button class="btn btn-small" id="btn-import" type="button" data-i18n="btn_import">📤 Import JSON</button>
           <input type="file" id="import-file" accept=".json,application/json">
         </div>
 
-        <p class="footer-note">Data hanya tersimpan di <code>localStorage</code> browser ini. Export JSON secara berkala sebagai backup — terutama sebelum membersihkan data browser.</p>
+        <p class="footer-note" data-i18n-html="footer_note">Data hanya tersimpan di <code>localStorage</code> browser ini. Export JSON secara berkala sebagai backup — terutama sebelum membersihkan data browser.</p>
       </div>
 
       <!-- ============ CHECKLIST PAGE ============ -->
       <div class="page" id="page-checklist" role="tabpanel">
-        <h1>Checklist Persiapan</h1>
-        <p class="subtitle">Centang satu per satu — progres tersimpan otomatis di browser.</p>
+        <h1 data-i18n="checklist_h1">Checklist Persiapan</h1>
+        <p class="subtitle" data-i18n="checklist_subtitle">Centang satu per satu — progres tersimpan otomatis di browser.</p>
         <div class="cl-overall">
           <span class="cl-percent" id="cl-percent">0%</span>
           <div class="progress-track"><div class="progress-fill" id="cl-progress" style="width:0%"></div></div>
-          <button class="btn btn-small" id="btn-cl-reset" type="button">↺ Reset checklist</button>
+          <button class="btn btn-small" id="btn-cl-reset" type="button" data-i18n="btn_cl_reset">↺ Reset checklist</button>
         </div>
         <div id="checklist-container"></div>
       </div>
 
       <!-- ============ ANALYTICS PAGE ============ -->
       <div class="page" id="page-analytics" role="tabpanel">
-        <h1>Analytics Lamaran</h1>
-        <p class="subtitle">Funnel, tren bulanan, dan distribusi — supaya tahu di tahap mana kamu sering gugur.</p>
+        <h1 data-i18n="analytics_h1">Analytics Lamaran</h1>
+        <p class="subtitle" data-i18n="analytics_subtitle">Funnel, tren bulanan, dan distribusi — supaya tahu di tahap mana kamu sering gugur.</p>
         <div class="analytics-grid" id="analytics-container"></div>
       </div>
 
       <!-- ============ TIPS PAGE ============ -->
       <div class="page" id="page-tips" role="tabpanel">
-        <h1>Tips &amp; Tricks</h1>
-        <p class="subtitle">Panduan lengkap melamar kerja — klik kategori untuk membuka.</p>
+        <h1 data-i18n="tips_h1">Tips &amp; Tricks</h1>
+        <p class="subtitle" data-i18n="tips_subtitle">Panduan lengkap melamar kerja — klik kategori untuk membuka.</p>
         <div class="tips-toolbar">
-          <input type="search" id="tips-search" placeholder="🔍 Cari di semua tips..." style="flex:1;min-width:180px" autocomplete="off">
-          <button class="btn btn-small" id="btn-tips-expand" type="button">Buka semua</button>
-          <button class="btn btn-small" id="btn-tips-collapse" type="button">Tutup semua</button>
+          <input type="search" id="tips-search" data-i18n-ph="tips_search_placeholder" placeholder="🔍 Cari di semua tips..." style="flex:1;min-width:180px" autocomplete="off">
+          <button class="btn btn-small" id="btn-tips-expand" type="button" data-i18n="btn_tips_expand">Buka semua</button>
+          <button class="btn btn-small" id="btn-tips-collapse" type="button" data-i18n="btn_tips_collapse">Tutup semua</button>
         </div>
         <div id="tips-container"></div>
       </div>
@@ -198,16 +199,16 @@
   <!-- RIGHT POST-ITS: quotes & shortcuts -->
   <div class="postit-column right" id="postits-right">
     <div class="postit postit-blue" id="postit-quote" style="transform:rotate(-1.5deg)">
-      <div class="pt">💬 Pengingat Hari Ini</div>
+      <div class="pt" data-i18n="postit_quote_title">💬 Pengingat Hari Ini</div>
       <div class="pb" id="postit-quote-body"></div>
     </div>
     <button class="postit postit-purple" style="transform:rotate(2.5deg)" type="button" data-goto="checklist">
-      <div class="pt">✅ Checklist</div>
-      <div class="pb" id="postit-checklist-body">Persiapan sebelum melamar</div>
+      <div class="pt" data-i18n="postit_checklist_title">✅ Checklist</div>
+      <div class="pb" id="postit-checklist-body" data-i18n="postit_checklist_default">Persiapan sebelum melamar</div>
     </button>
     <button class="postit postit-orange" style="transform:rotate(-2.5deg)" type="button" data-goto="analytics">
-      <div class="pt">📈 Analytics</div>
-      <div class="pb">Lihat funnel &amp; tren lamaranmu</div>
+      <div class="pt" data-i18n="postit_analytics_title">📈 Analytics</div>
+      <div class="pb" data-i18n="postit_analytics_body">Lihat funnel &amp; tren lamaranmu</div>
     </button>
   </div>
 </div>
@@ -215,62 +216,62 @@
 <!-- ============ ADD/EDIT DIALOG ============ -->
 <dialog id="app-dialog" aria-labelledby="dialog-title">
   <div class="sheet-head">
-    <div class="sheet-title" id="dialog-title">✏️ Tambah Lamaran Baru</div>
+    <div class="sheet-title" id="dialog-title" data-i18n="dialog_add_title">✏️ Tambah Lamaran Baru</div>
   </div>
   <form id="job-form" method="dialog">
     <div class="sheet-body">
       <div class="field-row">
         <div class="field">
-          <label for="f-company">Nama Perusahaan <span class="req">*</span></label>
-          <input type="text" id="f-company" required placeholder="PT Contoh Sejahtera" maxlength="120" autocomplete="organization">
+          <label for="f-company" data-i18n="field_company">Nama Perusahaan <span class="req">*</span></label>
+          <input type="text" id="f-company" required data-i18n-ph="field_company_placeholder" placeholder="PT Contoh Sejahtera" maxlength="120" autocomplete="organization">
         </div>
         <div class="field">
-          <label for="f-position">Posisi yang Dilamar <span class="req">*</span></label>
-          <input type="text" id="f-position" required placeholder="Frontend Developer" maxlength="120" autocomplete="organization-title">
+          <label for="f-position" data-i18n="field_position">Posisi yang Dilamar <span class="req">*</span></label>
+          <input type="text" id="f-position" required data-i18n-ph="field_position_placeholder" placeholder="Frontend Developer" maxlength="120" autocomplete="organization-title">
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="f-status">Status Lamaran <span class="req">*</span></label>
+          <label for="f-status" data-i18n="field_status">Status Lamaran <span class="req">*</span></label>
           <select id="f-status" required>
-            <option value="wishlist">Wishlist — baru tertarik</option>
-            <option value="applied" selected>Applied — sudah kirim</option>
-            <option value="interview">Interview — dipanggil wawancara</option>
-            <option value="offer">Offer — dapat tawaran! 🎉</option>
-            <option value="rejected">Rejected — belum rezeki</option>
+            <option value="wishlist" data-i18n="status_opt_wishlist">Wishlist — baru tertarik</option>
+            <option value="applied" selected data-i18n="status_opt_applied">Applied — sudah kirim</option>
+            <option value="interview" data-i18n="status_opt_interview">Interview — dipanggil wawancara</option>
+            <option value="offer" data-i18n="status_opt_offer">Offer — dapat tawaran! 🎉</option>
+            <option value="rejected" data-i18n="status_opt_rejected">Rejected — belum rezeki</option>
           </select>
         </div>
         <div class="field">
-          <label for="f-date">Tanggal Melamar <span class="req">*</span></label>
+          <label for="f-date" data-i18n="field_date">Tanggal Melamar <span class="req">*</span></label>
           <input type="date" id="f-date" required>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="f-platform">Platform Lamaran</label>
+          <label for="f-platform" data-i18n="field_platform">Platform Lamaran</label>
           <select id="f-platform">
-            <option value="">— pilih (opsional) —</option>
-            <option>LinkedIn</option>
-            <option>JobStreet</option>
-            <option>Glints</option>
-            <option>Kalibrr</option>
-            <option>Indeed</option>
-            <option>Website Perusahaan</option>
-            <option>Email Langsung</option>
-            <option>Referral</option>
-            <option>Walk-in</option>
-            <option>Lainnya</option>
+            <option value="" data-i18n="platform_opt_placeholder">— pilih (opsional) —</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="JobStreet">JobStreet</option>
+            <option value="Glints">Glints</option>
+            <option value="Kalibrr">Kalibrr</option>
+            <option value="Indeed">Indeed</option>
+            <option value="Website Perusahaan" data-i18n-platform="Website Perusahaan">Website Perusahaan</option>
+            <option value="Email Langsung" data-i18n-platform="Email Langsung">Email Langsung</option>
+            <option value="Referral">Referral</option>
+            <option value="Walk-in">Walk-in</option>
+            <option value="Lainnya" data-i18n-platform="Lainnya">Lainnya</option>
           </select>
         </div>
         <div class="field">
-          <label for="f-location">Lokasi Kerja</label>
-          <input type="text" id="f-location" placeholder="Surabaya / Remote" maxlength="120">
+          <label for="f-location" data-i18n="field_location">Lokasi Kerja</label>
+          <input type="text" id="f-location" data-i18n-ph="field_location_placeholder" placeholder="Surabaya / Remote" maxlength="120">
         </div>
       </div>
       <div class="field">
-        <label>Gaji yang Ditawarkan</label>
+        <label data-i18n="field_salary">Gaji yang Ditawarkan</label>
         <div class="salary-row">
-          <select id="f-currency" aria-label="Mata uang gaji">
+          <select id="f-currency" data-i18n-aria="currency_aria" aria-label="Mata uang gaji">
             <option value="IDR" selected>IDR (Rp)</option>
             <option value="USD">USD ($)</option>
             <option value="SGD">SGD (S$)</option>
@@ -278,29 +279,29 @@
             <option value="EUR">EUR (€)</option>
             <option value="GBP">GBP (£)</option>
           </select>
-          <input type="text" id="f-salary-min" inputmode="numeric" placeholder="minimum" aria-label="Gaji minimum">
+          <input type="text" id="f-salary-min" inputmode="numeric" data-i18n-ph="salary_min_placeholder" placeholder="minimum" data-i18n-aria="salary_min_aria" aria-label="Gaji minimum">
           <span class="salary-sep">–</span>
-          <input type="text" id="f-salary-max" inputmode="numeric" placeholder="maksimum" aria-label="Gaji maksimum">
+          <input type="text" id="f-salary-max" inputmode="numeric" data-i18n-ph="salary_max_placeholder" placeholder="maksimum" data-i18n-aria="salary_max_aria" aria-label="Gaji maksimum">
         </div>
         <div class="field-hint" id="salary-hint"></div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="f-contact">Contact Person</label>
-          <input type="text" id="f-contact" placeholder="Nama HRD / recruiter" maxlength="120">
+          <label for="f-contact" data-i18n="field_contact">Contact Person</label>
+          <input type="text" id="f-contact" data-i18n-ph="field_contact_placeholder" placeholder="Nama HRD / recruiter" maxlength="120">
         </div>
         <div class="field">
-          <label for="f-source-url">Link Lowongan</label>
+          <label for="f-source-url" data-i18n="field_source_url">Link Lowongan</label>
           <input type="url" id="f-source-url" placeholder="https://..." maxlength="500">
         </div>
       </div>
       <div class="field">
-        <label for="f-notes">Catatan Pribadi</label>
-        <textarea id="f-notes" placeholder="Tahapan seleksi, kesan interview, hal yang perlu ditindaklanjuti..."></textarea>
+        <label for="f-notes" data-i18n="field_notes">Catatan Pribadi</label>
+        <textarea id="f-notes" data-i18n-ph="field_notes_placeholder" placeholder="Tahapan seleksi, kesan interview, hal yang perlu ditindaklanjuti..."></textarea>
       </div>
       <div class="sheet-actions">
-        <button type="button" class="btn" id="btn-dialog-cancel">Batal</button>
-        <button type="submit" class="btn btn-primary" id="btn-dialog-save">💾 Simpan Lamaran</button>
+        <button type="button" class="btn" id="btn-dialog-cancel" data-i18n="btn_cancel">Batal</button>
+        <button type="submit" class="btn btn-primary" id="btn-dialog-save" data-i18n="btn_save_new">💾 Simpan Lamaran</button>
       </div>
     </div>
   </form>
@@ -309,17 +310,17 @@
 <!-- ============ IMPORT DIALOG ============ -->
 <dialog id="import-dialog" aria-labelledby="import-dialog-title">
   <div class="sheet-head">
-    <div class="sheet-title" id="import-dialog-title">📤 Import Data</div>
+    <div class="sheet-title" id="import-dialog-title" data-i18n="import_dialog_title">📤 Import Data</div>
   </div>
   <div class="sheet-body">
     <p id="import-summary"></p>
     <div class="import-choices">
-      <label><input type="radio" name="import-mode" value="merge" checked> <span><b>Gabungkan</b> — tambahkan data baru, lewati duplikat yang identik (aman)</span></label>
-      <label><input type="radio" name="import-mode" value="replace"> <span><b>Timpa semua</b> — ganti seluruh data dengan isi file (hati-hati!)</span></label>
+      <label><input type="radio" name="import-mode" value="merge" checked> <span data-i18n-html="import_merge_label"><b>Gabungkan</b> — tambahkan data baru, lewati duplikat yang identik (aman)</span></label>
+      <label><input type="radio" name="import-mode" value="replace"> <span data-i18n-html="import_replace_label"><b>Timpa semua</b> — ganti seluruh data dengan isi file (hati-hati!)</span></label>
     </div>
     <div class="sheet-actions">
-      <button type="button" class="btn" id="btn-import-cancel">Batal</button>
-      <button type="button" class="btn btn-primary" id="btn-import-confirm">📥 Import Sekarang</button>
+      <button type="button" class="btn" id="btn-import-cancel" data-i18n="btn_cancel">Batal</button>
+      <button type="button" class="btn btn-primary" id="btn-import-confirm" data-i18n="btn_import_now">📥 Import Sekarang</button>
     </div>
   </div>
 </dialog>
@@ -327,19 +328,20 @@
 <!-- ============ DELETE CONFIRM DIALOG ============ -->
 <dialog id="confirm-dialog" aria-labelledby="confirm-dialog-title">
   <div class="sheet-head">
-    <div class="sheet-title" id="confirm-dialog-title">🗑️ Hapus Lamaran?</div>
+    <div class="sheet-title" id="confirm-dialog-title" data-i18n="confirm_dialog_title">🗑️ Hapus Lamaran?</div>
   </div>
   <div class="sheet-body">
     <p id="confirm-message"></p>
     <div class="sheet-actions">
-      <button type="button" class="btn" id="btn-confirm-cancel">Batal</button>
-      <button type="button" class="btn btn-danger" id="btn-confirm-ok">Ya, Hapus</button>
+      <button type="button" class="btn" id="btn-confirm-cancel" data-i18n="btn_cancel">Batal</button>
+      <button type="button" class="btn btn-danger" id="btn-confirm-ok" data-i18n="btn_confirm_delete">Ya, Hapus</button>
     </div>
   </div>
 </dialog>
 
 <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
+<script src="i18n.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>
