@@ -59,6 +59,7 @@
       <div class="page-tab active" data-page="tracker" role="tab" tabindex="0" aria-selected="true" data-i18n="tab_tracker">📋 Tracker</div>
       <div class="page-tab" data-page="checklist" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_checklist">✅ Checklist</div>
       <div class="page-tab" data-page="analytics" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_analytics">📈 Analytics</div>
+      <div class="page-tab" data-page="jobs" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_jobs">🌐 Cari Lowongan</div>
       <div class="page-tab" data-page="tips" role="tab" tabindex="0" aria-selected="false" data-i18n="tab_tips">💡 Tips &amp; Tricks</div>
     </div>
 
@@ -164,14 +165,14 @@
 
       <!-- ============ CHECKLIST PAGE ============ -->
       <div class="page" id="page-checklist" role="tabpanel">
-        <h1 data-i18n="checklist_h1">Checklist Persiapan</h1>
-        <p class="subtitle" data-i18n="checklist_subtitle">Centang satu per satu — progres tersimpan otomatis di browser.</p>
+        <h1 data-i18n="checklist_h1">Checklist per Lamaran</h1>
+        <p class="subtitle" data-i18n="checklist_subtitle">Pilih lamaran untuk melihat dan mengisi checklist persiapannya — setiap perusahaan punya checklist sendiri.</p>
         <div class="cl-overall">
-          <span class="cl-percent" id="cl-percent">0%</span>
-          <div class="progress-track"><div class="progress-fill" id="cl-progress" style="width:0%"></div></div>
-          <button class="btn btn-small" id="btn-cl-reset" type="button" data-i18n="btn_cl_reset">↺ Reset checklist</button>
+          <span class="cl-percent" id="cl-agg-percent">0%</span>
+          <div class="progress-track"><div class="progress-fill" id="cl-agg-progress" style="width:0%"></div></div>
+          <span class="field-hint" id="cl-agg-label" data-i18n="checklist_avg_label" style="margin:0">Rata-rata kesiapan</span>
         </div>
-        <div id="checklist-container"></div>
+        <div id="checklist-app-list"></div>
       </div>
 
       <!-- ============ ANALYTICS PAGE ============ -->
@@ -179,6 +180,27 @@
         <h1 data-i18n="analytics_h1">Analytics Lamaran</h1>
         <p class="subtitle" data-i18n="analytics_subtitle">Funnel, tren bulanan, dan distribusi — supaya tahu di tahap mana kamu sering gugur.</p>
         <div class="analytics-grid" id="analytics-container"></div>
+      </div>
+
+      <!-- ============ JOBS PAGE ============ -->
+      <div class="page" id="page-jobs" role="tabpanel">
+        <h1 data-i18n="jobs_h1">Cari Lowongan</h1>
+        <p class="subtitle" data-i18n="jobs_subtitle">Lowongan terbaru dari Remotive, Arbeitnow, dan Jobicy — klik Tambah untuk memasukkannya ke tracker.</p>
+        <div class="jobs-toolbar">
+          <input type="search" id="jobs-keyword" data-i18n-ph="jobs_search_placeholder" placeholder="🔍 kata kunci (mis. frontend, data, marketing)..." autocomplete="off" style="flex:1;min-width:180px">
+          <select id="jobs-source" aria-label="Source">
+            <option value="all" data-i18n="jobs_source_all">Semua sumber</option>
+            <option value="remotive">Remotive</option>
+            <option value="arbeitnow">Arbeitnow</option>
+            <option value="jobicy">Jobicy</option>
+          </select>
+          <button class="btn btn-primary" id="btn-jobs-search" type="button" data-i18n="jobs_btn_search">🔍 Cari Lowongan</button>
+        </div>
+        <div class="results-bar">
+          <span id="jobs-result-count"></span>
+        </div>
+        <div id="jobs-results" aria-live="polite"></div>
+        <p class="footer-note" data-i18n="jobs_attribution">Data lowongan oleh Remotive, Arbeitnow, dan Jobicy.</p>
       </div>
 
       <!-- ============ TIPS PAGE ============ -->
@@ -335,6 +357,24 @@
     <div class="sheet-actions">
       <button type="button" class="btn" id="btn-confirm-cancel" data-i18n="btn_cancel">Batal</button>
       <button type="button" class="btn btn-danger" id="btn-confirm-ok" data-i18n="btn_confirm_delete">Ya, Hapus</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ PER-APPLICATION CHECKLIST DIALOG ============ -->
+<dialog id="checklist-dialog" aria-labelledby="checklist-dialog-title">
+  <div class="sheet-head">
+    <div class="sheet-title" id="checklist-dialog-title">✅ Checklist</div>
+  </div>
+  <div class="sheet-body">
+    <div class="cl-overall">
+      <span class="cl-percent" id="cl-dialog-percent">0%</span>
+      <div class="progress-track"><div class="progress-fill" id="cl-dialog-progress" style="width:0%"></div></div>
+      <button class="btn btn-small" id="btn-cl-reset" type="button" data-i18n="btn_cl_reset">↺ Reset checklist ini</button>
+    </div>
+    <div id="cl-dialog-container"></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn" id="btn-checklist-close" data-i18n="btn_close">Tutup</button>
     </div>
   </div>
 </dialog>

@@ -96,10 +96,10 @@ function seededQuote() {
 
 /* ---------- state ---------- */
 let applications = [];
-let checklistState = {};
 let editingId = null;
 let pendingImport = null;
 let deleteTargetId = null;
+let checklistTargetId = null;
 let currentPage = 1;
 let itemsPerPage = 10;
 
@@ -114,7 +114,6 @@ function saveApps() {
     showToast(T('toast_storage_full_msg'), 'error', T('toast_storage_full_title'));
   }
 }
-function saveChecklist() { localStorage.setItem(STORE_KEYS.checklist, JSON.stringify(checklistState)); }
 
 function migrateLegacy() {
   const legacy = localStorage.getItem(LEGACY_KEY);
@@ -140,7 +139,7 @@ function migrateLegacy() {
         date: a.date || todayISO(), currency: a.currency || 'IDR',
         salaryMin, salaryMax,
         location: a.location || '', platform: a.platform || '',
-        contact: '', sourceUrl: '', notes: a.notes || '',
+        contact: '', sourceUrl: '', notes: a.notes || '', checklist: {},
         createdAt: Date.now(), updatedAt: Date.now()
       };
     });
@@ -163,10 +162,14 @@ function loadAll() {
     salaryMin: a.salaryMin ?? null, salaryMax: a.salaryMax ?? null,
     location: a.location || '', platform: a.platform || '',
     contact: a.contact || '', sourceUrl: a.sourceUrl || '', notes: a.notes || '',
+    checklist: (a.checklist && typeof a.checklist === 'object' && !Array.isArray(a.checklist)) ? a.checklist : {},
     createdAt: a.createdAt || Date.now(), updatedAt: a.updatedAt || Date.now()
   }));
 
-  try { checklistState = JSON.parse(localStorage.getItem(STORE_KEYS.checklist)) || {}; } catch { checklistState = {}; }
+  // Checklist moved from one global list to per-application (jat.checklist.v2 is
+  // now unused legacy state - it can't be meaningfully mapped to a specific
+  // company, so it's dropped rather than guessed at).
+  if (localStorage.getItem(STORE_KEYS.checklist) !== null) localStorage.removeItem(STORE_KEYS.checklist);
 
   const theme = localStorage.getItem(STORE_KEYS.theme);
   if (theme === 'night' || theme === 'day') applyTheme(theme);
@@ -263,8 +266,8 @@ function updateStats() {
   ivPostit.hidden = iv.length === 0;
   $('#postit-interview-body').textContent = iv.length ? iv.slice(0, 2).map(a => `${a.company} — ${a.position}`).join(' • ') + (iv.length > 2 ? ` +${iv.length - 1}` : '') : '';
 
-  const cl = checklistProgress();
-  $('#postit-checklist-body').textContent = cl.total ? T('checklist_postit_tpl', { done: cl.done, total: cl.total, pct: cl.pct }) : T('postit_checklist_default');
+  const cl = checklistAggregate();
+  $('#postit-checklist-body').textContent = cl.count ? T('checklist_postit_tpl', { pct: cl.pct, count: cl.count }) : T('postit_checklist_default');
 
   renderAnalytics();
 }
@@ -315,6 +318,7 @@ function renderAppCard(app, idx) {
   const pinColors = ['pin-red', 'pin-blue', 'pin-green', 'pin-yellow'];
   const quickStatuses = STATUS_ORDER.filter(s => s !== app.status);
   const platformDisplay = platformLabel(app.platform, lang);
+  const clp = checklistProgressFor(app);
 
   return `
   <div class="app-card reveal" data-id="${esc(app.id)}">
@@ -351,6 +355,7 @@ function renderAppCard(app, idx) {
         </select>
       </label>
       <span class="spacer"></span>
+      <button class="btn btn-small card-checklist-btn" data-action="open-checklist" type="button">${esc(T('card_checklist_btn_tpl', { done: clp.done, total: clp.total }))}</button>
       <button class="btn btn-small" data-action="edit" type="button">${esc(T('btn_edit'))}</button>
       <button class="btn btn-small btn-danger" data-action="delete" type="button">${esc(T('btn_delete'))}</button>
     </div>
@@ -507,7 +512,7 @@ $('#job-form').addEventListener('submit', e => {
     if (i !== -1) applications[i] = { ...applications[i], ...data };
     showToast(T('toast_app_updated_tpl', { company: data.company }), 'success');
   } else {
-    applications.push({ ...data, id: uid(), createdAt: Date.now() });
+    applications.push({ ...data, id: uid(), createdAt: Date.now(), checklist: {} });
     showToast(T('toast_app_added_tpl', { company: data.company }), 'success');
   }
   editingId = null;
@@ -614,6 +619,7 @@ $('#import-file').addEventListener('change', e => {
         salaryMin: a.salaryMin ?? null, salaryMax: a.salaryMax ?? null,
         location: a.location || '', platform: a.platform || '',
         contact: a.contact || '', sourceUrl: a.sourceUrl || '', notes: a.notes || '',
+        checklist: (a.checklist && typeof a.checklist === 'object' && !Array.isArray(a.checklist)) ? a.checklist : {},
         createdAt: a.createdAt || Date.now(), updatedAt: a.updatedAt || Date.now()
       }));
       $('#import-summary').textContent = T('import_summary_tpl', { filename: file.name, count: pendingImport.length, current: applications.length });
@@ -723,13 +729,20 @@ document.addEventListener('click', e => {
   const action = target.dataset.action;
   if (!action) return;
   const card = target.closest('.app-card');
-  const id = card ? card.dataset.id : null;
+  const checklistRow = target.closest('.cl-app-row');
+  const id = card ? card.dataset.id : (checklistRow ? checklistRow.dataset.id : null);
 
   switch (action) {
     case 'add': openAddDialog(); break;
     case 'seed': seedSampleData(); break;
     case 'edit': if (id) openEditDialog(id); break;
     case 'delete': if (id) askDelete(id); break;
+    case 'open-checklist': if (id) openChecklistDialog(id); break;
+    case 'save-job': {
+      const jobCard = target.closest('[data-job-id]');
+      if (jobCard) saveJobToTracker(jobCard.dataset.jobId);
+      break;
+    }
     case 'reset-filters': resetFilters(); break;
   }
 });
@@ -766,7 +779,7 @@ function seedSampleData() {
   for (const s of samples) {
     const { notesId, notesEn, ...rest } = s;
     const notes = (lang === 'en' ? notesEn : notesId) || '';
-    applications.push({ id: uid(), createdAt: Date.now(), updatedAt: Date.now(), contact: '', sourceUrl: '', notes, location: '', salaryMin: null, salaryMax: null, ...rest, notes });
+    applications.push({ id: uid(), createdAt: Date.now(), updatedAt: Date.now(), contact: '', sourceUrl: '', notes, location: '', salaryMin: null, salaryMax: null, checklist: {}, ...rest, notes });
   }
   saveApps();
   currentPage = 1;
@@ -774,18 +787,57 @@ function seedSampleData() {
   showToast(T('toast_seed_loaded_tpl', { n: samples.length }), 'success', T('toast_seed_title'));
 }
 
-/* ---------- checklist ---------- */
-
-function checklistProgress() {
+/* ---------- checklist (per-application) ---------- */
+function checklistProgressFor(app) {
+  const cs = app.checklist || {};
   let done = 0, total = 0;
-  for (const cat of CHECKLIST_I18N[lang]) for (const [id] of cat.items) { total++; if (checklistState[`${cat.id}.${id}`]) done++; }
+  for (const cat of CHECKLIST_I18N[lang]) for (const [id] of cat.items) { total++; if (cs[`${cat.id}.${id}`]) done++; }
   return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
 }
 
-function renderChecklist() {
-  const container = $('#checklist-container');
+function checklistAggregate() {
+  if (!applications.length) return { pct: 0, count: 0 };
+  const sum = applications.reduce((acc, a) => acc + checklistProgressFor(a).pct, 0);
+  return { pct: Math.round(sum / applications.length), count: applications.length };
+}
+
+function renderChecklistDirectory() {
+  const list = $('#checklist-app-list');
+  const agg = checklistAggregate();
+  $('#cl-agg-percent').textContent = `${agg.pct}%`;
+  $('#cl-agg-progress').style.width = `${agg.pct}%`;
+
+  if (!applications.length) {
+    list.innerHTML = `
+      <div class="cl-empty">
+        <div class="empty-title">${esc(T('checklist_empty_title'))}</div>
+        <p>${esc(T('checklist_empty_desc'))}</p>
+      </div>`;
+    return;
+  }
+
+  const sorted = [...applications].sort((a, b) => b.date.localeCompare(a.date));
+  list.innerHTML = sorted.map(app => {
+    const p = checklistProgressFor(app);
+    return `
+    <button type="button" class="cl-app-row" data-action="open-checklist" data-id="${esc(app.id)}">
+      <div class="cl-app-info">
+        <div class="cl-app-company">${esc(app.company)}</div>
+        <div class="cl-app-position">${esc(app.position)}</div>
+      </div>
+      <div class="cl-app-track"><div class="cl-app-fill" style="width:${p.pct}%"></div></div>
+      <span class="cl-app-pct">${p.pct}%</span>
+    </button>`;
+  }).join('');
+}
+
+function renderChecklistDialogBody() {
+  const app = applications.find(a => a.id === checklistTargetId);
+  if (!app) return;
+  const cs = app.checklist || {};
+  const container = $('#cl-dialog-container');
   container.innerHTML = CHECKLIST_I18N[lang].map(cat => {
-    const done = cat.items.filter(([id]) => checklistState[`${cat.id}.${id}`]).length;
+    const done = cat.items.filter(([id]) => cs[`${cat.id}.${id}`]).length;
     const pct = Math.round(done / cat.items.length * 100);
     return `
     <div class="cl-category" data-cat="${cat.id}">
@@ -796,40 +848,66 @@ function renderChecklist() {
       <div class="cl-cat-track"><div class="cl-cat-fill" style="width:${pct}%"></div></div>
       ${cat.items.map(([id, text]) => `
         <div class="checklist-item">
-          <input type="checkbox" id="cl-${cat.id}-${id}" data-cl="${cat.id}.${id}" ${checklistState[`${cat.id}.${id}`] ? 'checked' : ''}>
+          <input type="checkbox" id="cl-${cat.id}-${id}" data-cl="${cat.id}.${id}" ${cs[`${cat.id}.${id}`] ? 'checked' : ''}>
           <label for="cl-${cat.id}-${id}">${esc(text)}</label>
         </div>`).join('')}
     </div>`;
   }).join('');
 
-  const p = checklistProgress();
-  $('#cl-percent').textContent = `${p.pct}%`;
-  $('#cl-progress').style.width = `${p.pct}%`;
+  const p = checklistProgressFor(app);
+  $('#cl-dialog-percent').textContent = `${p.pct}%`;
+  $('#cl-dialog-progress').style.width = `${p.pct}%`;
 }
 
-document.addEventListener('change', e => {
+const checklistDialog = $('#checklist-dialog');
+function openChecklistDialog(id) {
+  const app = applications.find(a => a.id === id);
+  if (!app) return;
+  checklistTargetId = id;
+  $('#checklist-dialog-title').textContent = T('checklist_dialog_title_tpl', { company: app.company });
+  renderChecklistDialogBody();
+  checklistDialog.showModal();
+}
+
+function refreshAfterChecklistDialog() {
+  checklistTargetId = null;
+  renderApplications();
+  if ($('#page-checklist').classList.contains('active')) renderChecklistDirectory();
+}
+checklistDialog.addEventListener('close', refreshAfterChecklistDialog);
+$('#btn-checklist-close').addEventListener('click', () => checklistDialog.close());
+
+$('#cl-dialog-container').addEventListener('change', e => {
   const box = e.target.closest('[data-cl]');
   if (!box) return;
-  checklistState[box.dataset.cl] = box.checked;
-  if (!box.checked) delete checklistState[box.dataset.cl];
-  saveChecklist();
+  const app = applications.find(a => a.id === checklistTargetId);
+  if (!app) return;
+  if (!app.checklist) app.checklist = {};
+  if (box.checked) app.checklist[box.dataset.cl] = true;
+  else delete app.checklist[box.dataset.cl];
+  app.updatedAt = Date.now();
+  saveApps();
+
   const cat = box.closest('.cl-category');
   const catId = cat.dataset.cat;
   const data = CHECKLIST_I18N[lang].find(c => c.id === catId);
-  const done = data.items.filter(([id]) => checklistState[`${catId}.${id}`]).length;
+  const done = data.items.filter(([iid]) => app.checklist[`${catId}.${iid}`]).length;
   const pct = Math.round(done / data.items.length * 100);
   $('.cl-cat-count', cat).textContent = `${done}/${data.items.length}`;
   $('.cl-cat-fill', cat).style.width = `${pct}%`;
-  const p = checklistProgress();
-  $('#cl-percent').textContent = `${p.pct}%`;
-  $('#cl-progress').style.width = `${p.pct}%`;
-  $('#postit-checklist-body').textContent = T('checklist_postit_tpl', { done: p.done, total: p.total, pct: p.pct });
+
+  const p = checklistProgressFor(app);
+  $('#cl-dialog-percent').textContent = `${p.pct}%`;
+  $('#cl-dialog-progress').style.width = `${p.pct}%`;
 });
 
 $('#btn-cl-reset').addEventListener('click', () => {
-  checklistState = {};
-  saveChecklist();
-  renderChecklist();
+  const app = applications.find(a => a.id === checklistTargetId);
+  if (!app) return;
+  app.checklist = {};
+  app.updatedAt = Date.now();
+  saveApps();
+  renderChecklistDialogBody();
   showToast(T('toast_checklist_reset'), 'info');
 });
 
@@ -991,6 +1069,167 @@ $('#tips-search').addEventListener('input', e => {
   }
 });
 
+/* ---------- jobs search (public APIs) ----------
+   Sources are free, key-less, CORS-open job APIs. Canonical job URLs are
+   preserved and attribution is shown in the Jobs tab footer. Requests are
+   fired only on explicit user action (search click), never on page load. */
+const JOB_SOURCES = {
+  remotive: {
+    label: 'Remotive',
+    fetch: kw => `https://remotive.com/api/remote-jobs?limit=20${kw ? `&search=${encodeURIComponent(kw)}` : ''}`,
+    parse: d => (d.jobs || []).map(j => ({
+      id: `remotive:${j.id}`, source: 'remotive', title: j.title || '', company: j.company_name || '',
+      location: j.candidate_required_location || '', url: j.url || '',
+      salary: j.salary || '', publishedAt: (j.publication_date || '').slice(0, 10)
+    }))
+  },
+  arbeitnow: {
+    label: 'Arbeitnow',
+    fetch: kw => `https://www.arbeitnow.com/api/job-board-api${kw ? `?search=${encodeURIComponent(kw)}` : ''}`,
+    parse: d => (d.data || []).map(j => ({
+      id: `arbeitnow:${j.slug || j.url}`, source: 'arbeitnow', title: j.title || '', company: j.company_name || '',
+      location: j.location || (j.remote ? 'Remote' : ''), url: j.url || '',
+      salary: '', publishedAt: j.created_at ? new Date(j.created_at * 1000).toISOString().slice(0, 10) : ''
+    }))
+  },
+  jobicy: {
+    label: 'Jobicy',
+    fetch: kw => `https://jobicy.com/api/v2/remote-jobs?count=20${kw ? `&tag=${encodeURIComponent(kw)}` : ''}`,
+    parse: d => (d.jobs || []).map(j => ({
+      id: `jobicy:${j.id}`, source: 'jobicy', title: j.jobTitle || '', company: j.companyName || '',
+      location: j.jobGeo || '', url: j.url || '',
+      salary: (j.salaryMin && j.salaryMax) ? `${fmtNumber(j.salaryMin)} – ${fmtNumber(j.salaryMax)} ${j.salaryCurrency || ''}` : '',
+      publishedAt: (j.pubDate || '').slice(0, 10)
+    }))
+  }
+};
+
+let jobsState = { items: [], lastQuery: '', searched: false };
+
+async function fetchJobs(keyword, source) {
+  const keys = source === 'all' ? Object.keys(JOB_SOURCES) : [source];
+  const results = await Promise.allSettled(
+    keys.map(k => fetch(JOB_SOURCES[k].fetch(keyword), { headers: { 'Accept': 'application/json' } }).then(r => {
+      if (!r.ok) throw new Error(`${JOB_SOURCES[k].label}: HTTP ${r.status}`);
+      return r.json();
+    }).then(d => JOB_SOURCES[k].parse(d)))
+  );
+  const items = [], failures = [];
+  results.forEach((res, i) => {
+    if (res.status === 'fulfilled') items.push(...res.value);
+    else failures.push(res.reason?.message || keys[i]);
+  });
+  // dedupe by title+company
+  const seen = new Set();
+  const deduped = items.filter(j => {
+    const sig = `${j.title}|${j.company}`.toLowerCase();
+    if (seen.has(sig)) return false;
+    seen.add(sig);
+    return true;
+  });
+  // Arbeitnow ignores its `search` param (returns the full feed), so filter
+  // client-side; harmless for sources that already filtered server-side.
+  const kw = keyword.trim().toLowerCase();
+  const filtered = kw ? deduped.filter(j =>
+    `${j.title} ${j.company} ${j.location}`.toLowerCase().includes(kw)
+  ) : deduped;
+  filtered.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
+  return { items: filtered, failures };
+}
+
+function jobSourceLabel(source) { return JOB_SOURCES[source]?.label || source; }
+
+function renderJobsIdle() {
+  if (jobsState.searched) { renderJobsResults(); return; }
+  $('#jobs-result-count').textContent = '';
+  $('#jobs-results').innerHTML = `<div class="jobs-empty">${esc(T('jobs_empty_before'))}</div>`;
+}
+
+function renderJobsResults() {
+  const { items } = jobsState;
+  $('#jobs-result-count').textContent = T('jobs_result_count_tpl', { n: items.length });
+  if (!items.length) {
+    $('#jobs-results').innerHTML = `<div class="jobs-empty">${esc(T('jobs_empty_no_result'))}</div>`;
+    return;
+  }
+  $('#jobs-results').innerHTML = items.map(job => `
+    <div class="job-card" data-job-id="${esc(job.id)}">
+      <div class="job-head">
+        <div class="job-title-block">
+          <div class="job-company">${esc(job.company)}</div>
+          <div class="job-position">${esc(job.title)}</div>
+        </div>
+        <div class="job-meta">
+          <span class="job-source-badge">${esc(jobSourceLabel(job.source))}</span>
+          ${job.location ? `<span class="meta-badge">📍 ${esc(job.location)}</span>` : ''}
+          ${job.salary ? `<span class="meta-badge">${esc(T('jobs_salary_tpl', { salary: job.salary }))}</span>` : ''}
+          ${job.publishedAt ? `<span class="meta-badge">${esc(T('jobs_publication_tpl', { date: fmtDate(job.publishedAt) }))}</span>` : ''}
+        </div>
+      </div>
+      <div class="job-actions">
+        <button class="btn btn-small btn-primary" data-action="save-job" type="button">${esc(T('jobs_add_btn'))}</button>
+        ${safeUrl(job.url) ? `<a class="btn btn-small" href="${esc(safeUrl(job.url))}" target="_blank" rel="noopener noreferrer">${esc(T('jobs_view_btn'))}</a>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function runJobsSearch() {
+  const kw = $('#jobs-keyword').value.trim();
+  const source = $('#jobs-source').value;
+  const btn = $('#btn-jobs-search');
+  btn.disabled = true;
+  btn.textContent = T('jobs_btn_searching');
+  $('#jobs-results').innerHTML = `<div class="jobs-loading">⏳</div>`;
+  try {
+    const { items, failures } = await fetchJobs(kw, source);
+    jobsState = { items, lastQuery: kw, searched: true };
+    renderJobsResults();
+    if (failures.length && !items.length) {
+      showToast(T('jobs_error_tpl', { message: failures[0] }), 'error');
+    } else if (failures.length) {
+      showToast(T('jobs_error_tpl', { message: failures.join(', ') }), 'warning');
+    }
+  } catch (e) {
+    jobsState = { items: [], lastQuery: kw, searched: true };
+    $('#jobs-result-count').textContent = '';
+    $('#jobs-results').innerHTML = `<div class="jobs-empty">${esc(T('jobs_error_tpl', { message: e.message || 'network' }))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = T('jobs_btn_search');
+  }
+}
+
+function saveJobToTracker(jobId) {
+  const job = jobsState.items.find(j => j.id === jobId);
+  if (!job) return;
+  const data = {
+    company: job.company || '—',
+    position: job.title || '—',
+    status: 'wishlist',
+    date: todayISO(),
+    currency: 'IDR',
+    salaryMin: null, salaryMax: null,
+    location: job.location || '',
+    platform: 'Lainnya',
+    contact: '',
+    sourceUrl: safeUrl(job.url) || '',
+    notes: `[${jobSourceLabel(job.source)}] ${job.url || ''}`.trim(),
+    updatedAt: Date.now()
+  };
+  applications.push({ ...data, id: uid(), createdAt: Date.now(), checklist: {} });
+  saveApps();
+  renderApplications();
+  showToast(T('toast_app_added_tpl', { company: data.company }), 'success');
+  const card = $(`[data-job-id="${CSS.escape(jobId)}"]`);
+  if (card) {
+    const btn = $('[data-action="save-job"]', card);
+    if (btn) { btn.textContent = T('jobs_added_btn'); btn.disabled = true; }
+  }
+}
+
+$('#btn-jobs-search').addEventListener('click', runJobsSearch);
+$('#jobs-keyword').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); runJobsSearch(); } });
+
 /* ---------- tabs ---------- */
 function switchTab(name) {
   $$('.page-tab').forEach(t => {
@@ -1006,7 +1245,8 @@ function switchTab(name) {
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'analytics') renderAnalytics();
-  if (name === 'checklist') renderChecklist();
+  if (name === 'checklist') renderChecklistDirectory();
+  if (name === 'jobs') renderJobsIdle();
   try { history.replaceState(null, '', `#${name}`); } catch {}
 }
 $$('.page-tab').forEach(tab => {
@@ -1045,10 +1285,14 @@ function setLang(next) {
   localStorage.setItem(STORE_KEYS.lang, lang);
   applyStaticI18n();
   renderQuote();
-  renderChecklist();
   renderTips();
   renderApplications();
   if ($('#page-analytics').classList.contains('active')) renderAnalytics();
+  if ($('#page-checklist').classList.contains('active')) renderChecklistDirectory();
+  if (checklistDialog.open) renderChecklistDialogBody();
+  if ($('#page-jobs').classList.contains('active')) renderJobsIdle();
+  const searchBtn = $('#btn-jobs-search');
+  if (searchBtn && !searchBtn.disabled) searchBtn.textContent = T('jobs_btn_search');
 }
 $('#lang-toggle').addEventListener('click', () => setLang(lang === 'id' ? 'en' : 'id'));
 
@@ -1151,7 +1395,7 @@ function init() {
   applyStaticI18n();
   initPlatformOptions();
   renderQuote();
-  renderChecklist();
+  renderChecklistDirectory();
   renderTips();
   renderApplications();
   initDeskDecor();
@@ -1178,7 +1422,7 @@ function init() {
 
   // restore tab from hash
   const hash = location.hash.slice(1);
-  if (['tracker', 'checklist', 'analytics', 'tips'].includes(hash)) switchTab(hash);
+  if (['tracker', 'checklist', 'analytics', 'jobs', 'tips'].includes(hash)) switchTab(hash);
 
   // re-observe reveals after list renders
   const mo = new MutationObserver(() => observeReveals());
