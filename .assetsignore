@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+.assetsignore
+.wrangler
+Dockerfile
+docker-compose.yml
+nginx.conf
+README.md
+wrangler.toml
