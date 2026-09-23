@@ -16,6 +16,10 @@ const UI_STRINGS = {
     theme_toggle_label: 'Ganti mode siang/malam',
     lang_toggle_label: 'Ganti bahasa ke Inggris',
     back_top_aria: 'Kembali ke atas',
+    repo_fab_title: 'Dukung Proyek Ini',
+    repo_fab_sub: 'Dikembangkan bersama di GitHub',
+    repo_fab_aria: 'Buka repositori GitHub proyek ini',
+    repo_fab_title_attr: 'Bintang, laporkan isu, atau kontribusi',
 
     postit_streak_title_attr: 'Lihat lamaran terbaru',
     postit_streak_title: '🔥 Ritme Melamar',
@@ -283,6 +287,10 @@ const UI_STRINGS = {
     theme_toggle_label: 'Toggle day/night mode',
     lang_toggle_label: 'Switch language to Indonesian',
     back_top_aria: 'Back to top',
+    repo_fab_title: 'Support This Project',
+    repo_fab_sub: 'Develop together on GitHub',
+    repo_fab_aria: 'Open the GitHub repository for this project',
+    repo_fab_title_attr: 'Star, report issues, or contribute',
 
     postit_streak_title_attr: 'View latest applications',
     postit_streak_title: '🔥 Application Streak',
