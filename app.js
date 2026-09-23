@@ -1236,6 +1236,7 @@ function switchTab(name) {
     const active = t.dataset.page === name;
     t.classList.toggle('active', active);
     t.setAttribute('aria-selected', String(active));
+    if (active) t.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   });
   $$('.page').forEach(p => p.classList.remove('active', 'page-flip-enter'));
   const page = $(`#page-${name}`);
@@ -1295,6 +1296,42 @@ function setLang(next) {
   if (searchBtn && !searchBtn.disabled) searchBtn.textContent = T('jobs_btn_search');
 }
 $('#lang-toggle').addEventListener('click', () => setLang(lang === 'id' ? 'en' : 'id'));
+
+/* ---------- dialog backdrop close ----------
+   On touch devices Esc isn't available, so tapping the backdrop (outside
+   the sheet) closes any open dialog. mousedown + coordinate check so
+   text-selection drags that end outside don't fire. */
+function initDialogBackdropClose() {
+  $$('dialog').forEach(dlg => {
+    dlg.addEventListener('mousedown', e => {
+      if (e.target !== dlg) return;
+      const rect = dlg.getBoundingClientRect();
+      const inSheet =
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!inSheet) dlg.close();
+    });
+  });
+}
+
+/* ---------- mobile tab-bar scroll cue ----------
+   Toggles .cue-left / .cue-right on .page-tabs so edge fades show only
+   when there's hidden content in that direction. */
+function initMobileTabCue() {
+  const bar = $('.page-tabs');
+  if (!bar) return;
+  const update = () => {
+    const max = bar.scrollWidth - bar.clientWidth;
+    bar.classList.toggle('cue-left', bar.scrollLeft > 4);
+    bar.classList.toggle('cue-right', bar.scrollLeft < max - 4);
+  };
+  bar.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update, { passive: true });
+  // run after fonts/layout settle, then once more lazily
+  update();
+  setTimeout(update, 400);
+  document.fonts?.ready?.then(update).catch(() => {});
+}
 
 /* ---------- pencil cursor ----------
    The SVG's drawing tip sits at local (3.5px, 24.5px) inside the 28x28 icon
@@ -1400,6 +1437,8 @@ function init() {
   renderApplications();
   initDeskDecor();
   initPencilCursor();
+  initDialogBackdropClose();
+  initMobileTabCue();
   initScrollUI();
   observeReveals();
 

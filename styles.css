@@ -753,9 +753,16 @@ details.tips-cat[open] summary { border-bottom: 1px dashed var(--card-border); }
   .postit-column.left { order: -1; }
   .postit-column.right { order: 3; }
   .notebook-wrapper { order: 1; }
-  .page-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 2px; padding-bottom: 2px; }
+  .page-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 2px; padding: 0 2px 2px; position: sticky; top: 0; z-index: 40; background: var(--desk); box-shadow: 0 2px 6px rgba(0, 0, 0, .08); }
   .page-tabs::-webkit-scrollbar { display: none; }
-  .page-tab { white-space: nowrap; flex-shrink: 0; }
+  .page-tab { white-space: nowrap; flex-shrink: 0; min-height: 44px; display: flex; align-items: center; }
+  .page-tabs::before, .page-tabs::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 28px; z-index: 41;
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  .page-tabs::before { left: -2px; background: linear-gradient(90deg, var(--desk) 30%, transparent); }
+  .page-tabs::after { right: -2px; background: linear-gradient(-90deg, var(--desk) 30%, transparent); }
+  .page-tabs.cue-left::before, .page-tabs.cue-right::after { opacity: 1; }
   .postit { min-width: 150px; flex: 1; font-size: .95em; padding: 14px 12px 16px; }
   .notebook { padding: 26px 18px 40px 34px; border-left-width: 2px; }
   .notebook::before { left: 23px; }
@@ -764,6 +771,15 @@ details.tips-cat[open] summary { border-bottom: 1px dashed var(--card-border); }
   h2 { font-size: 1.45em; }
   .pin, .paper-clip, .coffee-ring, .tape, .doodle { display: none; }
   .back-top { display: none; }
+
+  /* --- bigger touch targets (WCAG 44px) --- */
+  .btn { min-height: 44px; padding: 8px 18px 6px; }
+  .btn-small { min-height: 40px; }
+  .toolbar-row input, .toolbar-row select { min-height: 44px; }
+  .status-quick { min-height: 40px; }
+  .filter-chip { min-height: 36px; align-items: center; }
+  .filter-chip button { min-width: 32px; min-height: 32px; font-size: 1.2em; }
+  .pagination button { min-height: 44px; min-width: 44px; }
   .toolbar-row { grid-template-columns: 1fr 1fr; }
   .toolbar .adv-row { grid-template-columns: 1fr; }
   .analytics-grid { grid-template-columns: 1fr; }
